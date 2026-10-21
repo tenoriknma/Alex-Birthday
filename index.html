@@ -932,9 +932,10 @@
        They are not sent to the website owner.
        ========================================= */
 
-    const rsvpForm = document.getElementById("rsvpForm");
+    /* const rsvpForm = document.getElementById("rsvpForm");
     const formMessage = document.getElementById("formMessage");
 
+    
     function getSavedResponses() {
       try {
         const stored = localStorage.getItem("alexBirthdayRSVPs");
@@ -1024,7 +1025,273 @@
       rsvpForm.reset();
       updateAttendanceFields();
     });
+*/
 
+/**
+ * Alex's 7th Birthday RSVP Backend
+ * Google Apps Script Web App
+ *
+ * Spreadsheet tabs:
+ *   1. RSVP Responses
+ *   2. Summary
+ */
+
+const SPREADSHEET_ID = 1JJNvKOgwm1csiqd_DMeD3k7ECfDr78DyCxU3sVL9LKA;
+const RESPONSE_SHEET = "RSVP Responses";
+const SUMMARY_SHEET = "Summary";
+
+const HEADERS = [
+  "Submitted At",
+  "Guest Name",
+  "Attendance",
+  "Party Size",
+  "Birthday Message",
+  "Submission ID"
+];
+
+/**
+ * Health check when the web app URL is opened directly.
+ */
+function doGet() {
+  return HtmlService.createHtmlOutput(
+    "<h2>Alex's Birthday RSVP Backend</h2>" +
+    "<p>The backend is deployed. Submit an RSVP through the invitation.</p>"
+  );
+}
+
+/**
+ * Receive an RSVP submitted by the invitation's HTML form.
+ */
+function doPost(e) {
+  const params = e && e.parameter ? e.parameter : {};
+  const requestId = String(params.requestId || "");
+
+  try {
+    if (!SPREADSHEET_ID ||
+        SPREADSHEET_ID === 1JJNvKOgwm1csiqd_DMeD3k7ECfDr78DyCxU3sVL9LKA) {
+      throw new Error("The spreadsheet ID has not been configured.");
+    }
+
+    // Honeypot: reject submissions that fill in this hidden field.
+    if (String(params.website || "").trim() !== "") {
+      throw new Error("Invalid submission.");
+    }
+
+    const name = String(params.guestName || "")
+      .trim()
+      .replace(/\s+/g, " ");
+
+    const attendanceValue = String(params.attendance || "");
+    const message = String(params.guestMessage || "").trim().slice(0, 1000);
+
+    if (!name || name.length > 100) {
+      throw new Error("Please enter a valid name.");
+    }
+
+    if (attendanceValue !== "yes" && attendanceValue !== "no") {
+      throw new Error("Please select an attendance option.");
+    }
+
+    let partySize = 0;
+    let attendance = "I can't come";
+
+    if (attendanceValue === "yes") {
+      partySize = Number(params.guestCount);
+
+      if (!Number.isInteger(partySize) ||
+          partySize < 1 ||
+          partySize > 10) {
+        throw new Error("Please select a valid guest count.");
+      }
+
+      attendance = "I will be there";
+    }
+
+    const lock = LockService.getScriptLock();
+    lock.waitLock(10000);
+
+    try {
+      const spreadsheet =
+        SpreadsheetApp.openById(SPREADSHEET_ID);
+
+      const sheet = getResponseSheet_(spreadsheet);
+      getSummarySheet_(spreadsheet);
+
+      const now = new Date();
+      const lastRow = sheet.getLastRow();
+
+      let existingRow = 0;
+
+      /*
+       * Resubmitting with the same full name updates that guest's
+       * existing response instead of adding another row.
+       *
+       * Ask guests to use distinct full names to avoid collisions.
+       */
+      if (lastRow >= 2) {
+        const names = sheet.getRange(2, 2, lastRow - 1, 1)
+          .getDisplayValues();
+
+        const normalizedName = name.toLocaleLowerCase();
+
+        for (let i = 0; i < names.length; i++) {
+          if (String(names[i][0]).trim().toLocaleLowerCase()
+              === normalizedName) {
+            existingRow = i + 2;
+            break;
+          }
+        }
+      }
+
+      const rowData = [
+        now,
+        name,
+        attendance,
+        partySize,
+        message,
+        requestId
+      ];
+
+      if (existingRow) {
+        sheet.getRange(existingRow, 1, 1, HEADERS.length)
+          .setValues([rowData]);
+      } else {
+        sheet.appendRow(rowData);
+      }
+
+      sheet.getRange(
+        existingRow || sheet.getLastRow(),
+        1
+      ).setNumberFormat("mmm d, yyyy h:mm AM/PM");
+
+    } finally {
+      lock.releaseLock();
+    }
+
+    return responsePage_(
+      requestId,
+      true,
+      attendanceValue === "yes"
+        ? "Thank you, " + name +
+          "! Your RSVP has been saved. We look forward to seeing you!"
+        : "Thank you, " + name +
+          "! Your response has been saved. We'll miss you!"
+    );
+
+  } catch (error) {
+    console.error(error);
+
+    return responsePage_(
+      requestId,
+      false,
+      error && error.message
+        ? error.message
+        : "We couldn't save your RSVP. Please try again."
+    );
+  }
+}
+
+/**
+ * Get the response sheet and create its headers if necessary.
+ */
+function getResponseSheet_(spreadsheet) {
+  let sheet = spreadsheet.getSheetByName(RESPONSE_SHEET);
+
+  if (!sheet) {
+    sheet = spreadsheet.insertSheet(RESPONSE_SHEET);
+  }
+
+  if (sheet.getLastRow() === 0) {
+    sheet.getRange(1, 1, 1, HEADERS.length)
+      .setValues([HEADERS]);
+
+    sheet.setFrozenRows(1);
+    sheet.getRange(1, 1, 1, HEADERS.length)
+      .setFontWeight("bold")
+      .setBackground("#F6A6CF");
+    sheet.autoResizeColumns(1, HEADERS.length);
+  }
+
+  return sheet;
+}
+
+/**
+ * Create a summary dashboard with live spreadsheet formulas.
+ */
+function getSummarySheet_(spreadsheet) {
+  let sheet = spreadsheet.getSheetByName(SUMMARY_SHEET);
+
+  if (!sheet) {
+    sheet = spreadsheet.insertSheet(SUMMARY_SHEET);
+  }
+
+  if (sheet.getLastRow() === 0) {
+    sheet.getRange("A1:B1").merge();
+    sheet.getRange("A1").setValue("Alex's 7th Birthday RSVP Summary");
+
+    sheet.getRange("A3:B7").setValues([
+      ["Metric", "Total"],
+      ["Accepted RSVPs", ""],
+      ["Declined RSVPs", ""],
+      ["Expected Attendees", ""],
+      ["Total Responses", ""]
+    ]);
+
+    sheet.getRange("B4").setFormula(
+      '=COUNTIF(\'RSVP Responses\'!C2:C,"I will be there")'
+    );
+
+    sheet.getRange("B5").setFormula(
+      '=COUNTIF(\'RSVP Responses\'!C2:C,"I can\'t come")'
+    );
+
+    sheet.getRange("B6").setFormula(
+      '=SUMIF(\'RSVP Responses\'!C2:C,"I will be there",\'RSVP Responses\'!D2:D)'
+    );
+
+    sheet.getRange("B7").setFormula(
+      '=COUNTA(\'RSVP Responses\'!B2:B)'
+    );
+
+    sheet.getRange("A1:B1")
+      .setFontWeight("bold")
+      .setFontSize(16)
+      .setBackground("#E9D5FF");
+
+    sheet.getRange("A3:B3")
+      .setFontWeight("bold")
+      .setBackground("#FCE7F3");
+
+    sheet.setColumnWidth(1, 220);
+    sheet.setColumnWidth(2, 140);
+  }
+
+  return sheet;
+}
+
+/**
+ * Return an HTML response to the hidden iframe in index.html.
+ * postMessage lets the parent page know whether saving succeeded.
+ */
+function responsePage_(requestId, ok, message) {
+  const payload = JSON.stringify({
+    type: "ALEX_RSVP_RESULT",
+    requestId: String(requestId || ""),
+    ok: Boolean(ok),
+    message: String(message || "")
+  }).replace(/</g, "\\u003c");
+
+  const html =
+    '<!DOCTYPE html><html><head><meta charset="UTF-8"></head>' +
+    '<body><script>' +
+    'window.parent.postMessage(' + payload + ', "*");' +
+    '</script></body></html>';
+
+  return HtmlService.createHtmlOutput(html)
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+}
+
+    
     /* =========================================
        DECORATIVE FLOATING HEARTS
        Created with vanilla JavaScript only.
