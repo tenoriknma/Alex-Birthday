@@ -1,1 +1,1050 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f8d9ed">
+  <title>Alex's 7th Birthday | You're Invited!</title>
+
+  <style>
+    /* =========================================
+       ALEX'S 7TH BIRTHDAY INVITATION
+       Single-file HTML, CSS, and JavaScript
+       ========================================= */
+
+    :root {
+      --pink: #f6a6cf;
+      --pink-dark: #dc65a5;
+      --pink-light: #fff0f8;
+      --purple: #9b70d6;
+      --purple-dark: #7044a7;
+      --cream: #fffaf5;
+      --text: #583b60;
+      --white: #ffffff;
+      --shadow: 0 12px 35px rgba(125, 74, 131, 0.15);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: "Trebuchet MS", Arial, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 10% 10%, #ffe7f3 0, transparent 28%),
+        radial-gradient(circle at 90% 40%, #eee4ff 0, transparent 30%),
+        var(--cream);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    button, input, textarea, select {
+      font: inherit;
+    }
+
+    button, a, input, textarea, select {
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    a {
+      color: inherit;
+    }
+
+    .sparkle {
+      position: fixed;
+      z-index: -1;
+      pointer-events: none;
+      opacity: 0.45;
+      animation: float 6s ease-in-out infinite;
+    }
+
+    .sparkle.one {
+      top: 14%;
+      left: 5%;
+      font-size: 30px;
+    }
+
+    .sparkle.two {
+      top: 45%;
+      right: 5%;
+      font-size: 24px;
+      animation-delay: 1s;
+    }
+
+    .sparkle.three {
+      bottom: 10%;
+      left: 8%;
+      font-size: 27px;
+      animation-delay: 2s;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0) rotate(0deg); }
+      50% { transform: translateY(-15px) rotate(12deg); }
+    }
+
+    .hero {
+      min-height: 92vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 55px 20px 70px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+      background: linear-gradient(145deg, #ffe8f4 0%, #f9d8f0 45%, #e9dcff 100%);
+      border-radius: 0 0 48% 48% / 0 0 5% 5%;
+    }
+
+    .hero::before,
+    .hero::after {
+      content: "✦";
+      position: absolute;
+      color: white;
+      font-size: clamp(45px, 7vw, 90px);
+      opacity: 0.7;
+      animation: float 5s ease-in-out infinite;
+    }
+
+    .hero::before {
+      top: 13%;
+      left: 9%;
+    }
+
+    .hero::after {
+      right: 10%;
+      bottom: 17%;
+      animation-delay: 1.5s;
+    }
+
+    .hero-content {
+      width: 100%;
+      max-width: 850px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .eyebrow {
+      display: inline-block;
+      padding: 8px 20px;
+      margin-bottom: 20px;
+      border: 1px solid rgba(220, 101, 165, 0.35);
+      border-radius: 30px;
+      background: rgba(255, 255, 255, 0.65);
+      color: var(--purple-dark);
+      font-size: 0.83rem;
+      font-weight: bold;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+    }
+
+    .crown {
+      display: block;
+      font-size: clamp(45px, 8vw, 75px);
+      line-height: 1.3;
+      margin-bottom: 4px;
+      filter: drop-shadow(0 5px 5px rgba(151, 92, 151, 0.12));
+    }
+
+    h1 {
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(3.5rem, 10vw, 7.5rem);
+      font-weight: normal;
+      line-height: 1.05;
+      color: var(--purple-dark);
+      text-shadow: 2px 3px 0 white;
+    }
+
+    .hero-subtitle {
+      margin-top: 16px;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(1.25rem, 3vw, 2rem);
+      color: var(--pink-dark);
+      font-style: italic;
+    }
+
+    .hero-description {
+      max-width: 550px;
+      margin: 18px auto 27px;
+      font-size: 1.05rem;
+      color: #745878;
+    }
+
+    .age-badge {
+      display: inline-flex;
+      width: 112px;
+      height: 112px;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 25px;
+      border-radius: 50%;
+      border: 5px solid white;
+      background: linear-gradient(145deg, #f7a8d1, #bb91ed);
+      color: white;
+      box-shadow: 0 8px 22px rgba(153, 93, 171, 0.25);
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 3.7rem;
+      font-weight: bold;
+    }
+
+    .primary-button {
+      display: inline-block;
+      border: none;
+      border-radius: 40px;
+      padding: 15px 30px;
+      background: linear-gradient(135deg, var(--pink-dark), var(--purple));
+      color: white;
+      font-weight: bold;
+      text-decoration: none;
+      cursor: pointer;
+      box-shadow: 0 7px 18px rgba(165, 83, 164, 0.23);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .primary-button:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 24px rgba(165, 83, 164, 0.3);
+    }
+
+    .primary-button:focus-visible,
+    button:focus-visible,
+    a:focus-visible,
+    input:focus-visible,
+    textarea:focus-visible,
+    select:focus-visible {
+      outline: 3px solid #8c55bd;
+      outline-offset: 3px;
+    }
+
+    section {
+      padding: 75px 20px;
+    }
+
+    .section-inner {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    .section-heading {
+      text-align: center;
+      margin-bottom: 35px;
+    }
+
+    .section-heading .mini {
+      display: block;
+      color: var(--pink-dark);
+      font-size: 1.8rem;
+      margin-bottom: 3px;
+    }
+
+    .section-heading h2 {
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(2rem, 5vw, 3.1rem);
+      color: var(--purple-dark);
+      font-weight: normal;
+      line-height: 1.25;
+    }
+
+    .section-heading p {
+      margin-top: 12px;
+      color: #806c85;
+    }
+
+    .countdown-section {
+      padding-top: 45px;
+      padding-bottom: 55px;
+    }
+
+    .countdown {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      max-width: 650px;
+      margin: 0 auto;
+    }
+
+    .countdown-item {
+      padding: 20px 8px;
+      text-align: center;
+      background: white;
+      border: 1px solid #f6d5ea;
+      border-radius: 20px;
+      box-shadow: var(--shadow);
+    }
+
+    .countdown-number {
+      display: block;
+      font-size: clamp(1.7rem, 5vw, 2.8rem);
+      color: var(--pink-dark);
+      font-weight: bold;
+      line-height: 1.25;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .countdown-label {
+      font-size: 0.75rem;
+      color: #8b7191;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .details-section {
+      background: rgba(255, 235, 247, 0.58);
+    }
+
+    .details-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 20px;
+    }
+
+    .detail-card {
+      padding: 30px 18px;
+      text-align: center;
+      background: rgba(255, 255, 255, 0.9);
+      border: 1px solid #f4d7ed;
+      border-radius: 25px;
+      box-shadow: var(--shadow);
+      transition: transform 0.2s;
+    }
+
+    .detail-card:hover {
+      transform: translateY(-5px);
+    }
+
+    .detail-icon {
+      display: block;
+      font-size: 2.7rem;
+      margin-bottom: 10px;
+    }
+
+    .detail-card h3 {
+      font-size: 1.15rem;
+      color: var(--purple-dark);
+      margin-bottom: 7px;
+    }
+
+    .detail-card p {
+      color: #79627f;
+    }
+
+    .venue-note {
+      text-align: center;
+      margin-top: 25px;
+      color: #79627f;
+      font-size: 0.95rem;
+    }
+
+    .rsvp-section {
+      background: linear-gradient(180deg, #fffaf5, #f9e8fa);
+    }
+
+    .rsvp-card {
+      max-width: 700px;
+      margin: 0 auto;
+      padding: clamp(22px, 5vw, 45px);
+      background: white;
+      border: 1px solid #f3d6eb;
+      border-radius: 30px;
+      box-shadow: 0 15px 45px rgba(125, 74, 131, 0.12);
+    }
+
+    .rsvp-intro {
+      text-align: center;
+      margin-bottom: 28px;
+      color: #806c85;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label,
+    .form-label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: bold;
+      color: var(--purple-dark);
+    }
+
+    .required {
+      color: #d34d91;
+    }
+
+    .form-control {
+      display: block;
+      width: 100%;
+      min-height: 49px;
+      padding: 12px 14px;
+      border: 1px solid #e8d3e8;
+      border-radius: 12px;
+      background: #fffafd;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .form-control:focus {
+      border-color: var(--purple);
+      box-shadow: 0 0 0 3px rgba(155, 112, 214, 0.13);
+    }
+
+    textarea.form-control {
+      min-height: 110px;
+      resize: vertical;
+    }
+
+    .attendance-options {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .attendance-option {
+      position: relative;
+    }
+
+    .attendance-option input {
+      position: absolute;
+      opacity: 0;
+      width: 1px;
+      height: 1px;
+    }
+
+    .attendance-option label {
+      display: flex;
+      min-height: 76px;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 14px 10px;
+      text-align: center;
+      border: 2px solid #ead8eb;
+      border-radius: 16px;
+      background: #fffafd;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin: 0;
+      color: #806c85;
+    }
+
+    .attendance-option input:checked + label {
+      border-color: var(--pink-dark);
+      background: #fff0f8;
+      color: var(--purple-dark);
+      box-shadow: 0 4px 12px rgba(220, 101, 165, 0.12);
+      font-weight: bold;
+    }
+
+    .attendance-option input:focus-visible + label {
+      outline: 3px solid #8c55bd;
+      outline-offset: 3px;
+    }
+
+    .attendance-option label span {
+      font-size: 1.4rem;
+    }
+
+    .guest-count-group {
+      display: none;
+      padding: 17px;
+      margin-top: 15px;
+      border-radius: 14px;
+      background: #fff4fa;
+      border: 1px dashed #edb8d8;
+    }
+
+    .guest-count-group.visible {
+      display: block;
+    }
+
+    .helper-text {
+      display: block;
+      margin-top: 6px;
+      font-size: 0.84rem;
+      color: #907d94;
+    }
+
+    .submit-button {
+      width: 100%;
+      margin-top: 5px;
+      font-size: 1.05rem;
+    }
+
+    .form-message {
+      display: none;
+      padding: 15px;
+      margin-top: 20px;
+      border-radius: 12px;
+      text-align: center;
+      overflow-wrap: anywhere;
+    }
+
+    .form-message.success {
+      display: block;
+      color: #276b47;
+      background: #e8f8ee;
+      border: 1px solid #bce8cb;
+    }
+
+    .form-message.error {
+      display: block;
+      color: #963c56;
+      background: #fff0f2;
+      border: 1px solid #f0c2cd;
+    }
+
+    .privacy-note {
+      margin-top: 17px;
+      text-align: center;
+      font-size: 0.82rem;
+      color: #96849a;
+    }
+
+    .footer {
+      padding: 35px 20px;
+      text-align: center;
+      color: #806c85;
+      background: #f8e1f1;
+    }
+
+    .footer .heart {
+      color: #dc65a5;
+    }
+
+    .footer .footer-title {
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 1.4rem;
+      color: var(--purple-dark);
+      margin-bottom: 5px;
+    }
+
+    .floating-hearts {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .floating-heart {
+      position: absolute;
+      bottom: -60px;
+      opacity: 0;
+      animation: rise 8s linear infinite;
+    }
+
+    @keyframes rise {
+      0% {
+        transform: translateY(0) rotate(0deg);
+        opacity: 0;
+      }
+      15% { opacity: 0.55; }
+      85% { opacity: 0.35; }
+      100% {
+        transform: translateY(-100vh) rotate(35deg);
+        opacity: 0;
+      }
+    }
+
+    @media (max-width: 700px) {
+      .hero {
+        min-height: 82vh;
+        padding: 55px 20px;
+      }
+
+      .details-grid {
+        grid-template-columns: 1fr;
+        max-width: 430px;
+        margin: 0 auto;
+      }
+
+      .detail-card {
+        padding: 23px 16px;
+      }
+
+      section {
+        padding: 58px 18px;
+      }
+
+      .countdown {
+        gap: 8px;
+      }
+
+      .countdown-item {
+        padding: 15px 4px;
+        border-radius: 14px;
+      }
+
+      .countdown-label {
+        font-size: 0.65rem;
+        letter-spacing: 0;
+      }
+
+      .eyebrow {
+        font-size: 0.7rem;
+        letter-spacing: 2px;
+      }
+    }
+
+    @media (max-width: 380px) {
+      .attendance-options {
+        grid-template-columns: 1fr;
+      }
+
+      .countdown-number {
+        font-size: 1.6rem;
+      }
+
+      .age-badge {
+        width: 92px;
+        height: 92px;
+        font-size: 3rem;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        scroll-behavior: auto !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <span class="sparkle one" aria-hidden="true">✦</span>
+  <span class="sparkle two" aria-hidden="true">✧</span>
+  <span class="sparkle three" aria-hidden="true">✦</span>
+
+  <!-- HERO / MAIN INVITATION -->
+  <header class="hero">
+    <div class="floating-hearts" id="floatingHearts" aria-hidden="true"></div>
+
+    <div class="hero-content">
+      <span class="eyebrow">A magical celebration awaits</span>
+      <span class="crown" aria-hidden="true">👑</span>
+
+      <p class="hero-subtitle">You're invited to celebrate</p>
+      <h1>Alex's</h1>
+      <p class="hero-subtitle">7th Birthday Party!</p>
+
+      <div class="age-badge" aria-label="Turning seven">7</div>
+
+      <p class="hero-description">
+        Seven years of smiles, laughter, and love!
+        Come join us for a wonderful celebration filled with
+        fun, yummy food, and happy memories.
+      </p>
+
+      <a href="#rsvp" class="primary-button">💌 RSVP Now</a>
+    </div>
+  </header>
+
+  <!-- COUNTDOWN -->
+  <section class="countdown-section" aria-labelledby="countdown-title">
+    <div class="section-inner">
+      <div class="section-heading">
+        <span class="mini" aria-hidden="true">✨ 🎂 ✨</span>
+        <h2 id="countdown-title">The Big Day Is Coming!</h2>
+        <p>Let's count down to Alex's special day.</p>
+      </div>
+
+      <div class="countdown" aria-label="Countdown to December 1, 2026">
+        <div class="countdown-item">
+          <span class="countdown-number" id="days">--</span>
+          <span class="countdown-label">Days</span>
+        </div>
+        <div class="countdown-item">
+          <span class="countdown-number" id="hours">--</span>
+          <span class="countdown-label">Hours</span>
+        </div>
+        <div class="countdown-item">
+          <span class="countdown-number" id="minutes">--</span>
+          <span class="countdown-label">Minutes</span>
+        </div>
+        <div class="countdown-item">
+          <span class="countdown-number" id="seconds">--</span>
+          <span class="countdown-label">Seconds</span>
+        </div>
+      </div>
+      <p id="countdownStatus" class="venue-note" aria-live="polite"></p>
+    </div>
+  </section>
+
+  <!-- EVENT DETAILS -->
+  <section class="details-section" id="details" aria-labelledby="details-title">
+    <div class="section-inner">
+      <div class="section-heading">
+        <span class="mini" aria-hidden="true">🎀</span>
+        <h2 id="details-title">Party Details</h2>
+        <p>Save the date and get ready for some birthday fun!</p>
+      </div>
+
+      <div class="details-grid">
+        <article class="detail-card">
+          <span class="detail-icon" aria-hidden="true">📅</span>
+          <h3>When</h3>
+          <p>Tuesday</p>
+          <p><strong>December 1, 2026</strong></p>
+        </article>
+
+        <article class="detail-card">
+          <span class="detail-icon" aria-hidden="true">⏰</span>
+          <h3>What Time</h3>
+          <p><strong>7:00 PM – 9:00 PM</strong></p>
+          <p>Two hours of birthday fun!</p>
+        </article>
+
+        <article class="detail-card">
+          <span class="detail-icon" aria-hidden="true">📍</span>
+          <h3>Where</h3>
+          <p><strong>Jollibee Taytay</strong></p>
+          <p>Let's meet for food and fun!</p>
+        </article>
+      </div>
+
+      <p class="venue-note">
+        💗 Your presence will make Alex's birthday extra special!
+      </p>
+    </div>
+  </section>
+
+  <!-- RSVP FORM -->
+  <section class="rsvp-section" id="rsvp" aria-labelledby="rsvp-title">
+    <div class="section-inner">
+      <div class="section-heading">
+        <span class="mini" aria-hidden="true">💌</span>
+        <h2 id="rsvp-title">Will You Join the Fun?</h2>
+        <p>Please let us know if you can celebrate with Alex.</p>
+      </div>
+
+      <div class="rsvp-card">
+        <p class="rsvp-intro">
+          Kindly send your RSVP so we can prepare for a lovely celebration.
+        </p>
+
+        <form id="rsvpForm">
+          <div class="form-group">
+            <label for="guestName">
+              Your Name <span class="required">*</span>
+            </label>
+            <input
+              class="form-control"
+              type="text"
+              id="guestName"
+              name="guestName"
+              placeholder="Enter your full name"
+              maxlength="100"
+              autocomplete="name"
+              required
+            >
+          </div>
+
+          <div class="form-group">
+            <span class="form-label" id="attendance-label">
+              Will you be there? <span class="required">*</span>
+            </span>
+
+            <div class="attendance-options" role="radiogroup"
+                 aria-labelledby="attendance-label">
+              <div class="attendance-option">
+                <input
+                  type="radio"
+                  id="attending"
+                  name="attendance"
+                  value="yes"
+                  required
+                  checked
+                >
+                <label for="attending">
+                  <span aria-hidden="true">🥳</span>
+                  I will be there!
+                </label>
+              </div>
+
+              <div class="attendance-option">
+                <input
+                  type="radio"
+                  id="notAttending"
+                  name="attendance"
+                  value="no"
+                >
+                <label for="notAttending">
+                  <span aria-hidden="true">💗</span>
+                  I can't come
+                </label>
+              </div>
+            </div>
+
+            <div class="guest-count-group visible" id="guestCountGroup">
+              <div class="form-group" style="margin-bottom: 0;">
+                <label for="guestCount">How many people will attend?</label>
+                <select class="form-control" id="guestCount" name="guestCount">
+                  <option value="1">1 person (just me)</option>
+                  <option value="2">2 people</option>
+                  <option value="3">3 people</option>
+                  <option value="4">4 people</option>
+                  <option value="5">5 people</option>
+                  <option value="6">6 people</option>
+                  <option value="7">7 people</option>
+                  <option value="8">8 people</option>
+                  <option value="9">9 people</option>
+                  <option value="10">10 people</option>
+                </select>
+                <span class="helper-text">
+                  Please include yourself in the total number.
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="guestMessage">Message for Alex (Optional)</label>
+            <textarea
+              class="form-control"
+              id="guestMessage"
+              name="guestMessage"
+              placeholder="Write a birthday greeting or a message for the family..."
+              maxlength="1000"
+              rows="4"
+            ></textarea>
+          </div>
+
+          <button type="submit" class="primary-button submit-button">
+            💖 Send My RSVP
+          </button>
+
+          <div
+            id="formMessage"
+            class="form-message"
+            role="status"
+            aria-live="polite"
+          ></div>
+        </form>
+
+        <p class="privacy-note">
+          Thank you for being part of Alex's special day! 🎂
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <p class="footer-title">Alex's 7th Birthday</p>
+    <p>December 1, 2026 · Jollibee Taytay · 7 PM – 9 PM</p>
+    <p style="margin-top: 12px;">
+      Made with <span class="heart">♥</span> for our birthday girl
+    </p>
+    <p style="font-size: 0.8rem; margin-top: 8px;">
+      We can't wait to celebrate with you!
+    </p>
+  </footer>
+
+  <script>
+    /* =========================================
+       COUNTDOWN TIMER
+       Uses the visitor's browser local time.
+       Event time: 7:00 PM, December 1, 2026.
+       ========================================= */
+
+    const eventDate = new Date(2026, 11, 1, 19, 0, 0);
+
+    const countdownElements = {
+      days: document.getElementById("days"),
+      hours: document.getElementById("hours"),
+      minutes: document.getElementById("minutes"),
+      seconds: document.getElementById("seconds")
+    };
+
+    const countdownStatus = document.getElementById("countdownStatus");
+
+    function updateCountdown() {
+      const now = new Date();
+      const difference = eventDate.getTime() - now.getTime();
+
+      if (difference <= 0) {
+        Object.values(countdownElements).forEach(function (element) {
+          element.textContent = "0";
+        });
+
+        countdownStatus.textContent =
+          "🎉 It's Alex's birthday celebration day! Let's party!";
+
+        return;
+      }
+
+      const days = Math.floor(difference / (1000 * 60 * 60 * 24));
+      const hours = Math.floor(
+        (difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
+      );
+      const minutes = Math.floor(
+        (difference % (1000 * 60 * 60)) / (1000 * 60)
+      );
+      const seconds = Math.floor((difference % (1000 * 60)) / 1000);
+
+      countdownElements.days.textContent = days;
+      countdownElements.hours.textContent = String(hours).padStart(2, "0");
+      countdownElements.minutes.textContent = String(minutes).padStart(2, "0");
+      countdownElements.seconds.textContent = String(seconds).padStart(2, "0");
+
+      countdownStatus.textContent = "Counting down to the celebration! 💕";
+    }
+
+    updateCountdown();
+    setInterval(updateCountdown, 1000);
+
+    /* =========================================
+       ATTENDANCE TOGGLE
+       Show guest count only when attending.
+       ========================================= */
+
+    const attendingRadio = document.getElementById("attending");
+    const notAttendingRadio = document.getElementById("notAttending");
+    const guestCountGroup = document.getElementById("guestCountGroup");
+    const guestCountSelect = document.getElementById("guestCount");
+
+    function updateAttendanceFields() {
+      const isAttending = attendingRadio.checked;
+
+      guestCountGroup.classList.toggle("visible", isAttending);
+      guestCountSelect.disabled = !isAttending;
+    }
+
+    attendingRadio.addEventListener("change", updateAttendanceFields);
+    notAttendingRadio.addEventListener("change", updateAttendanceFields);
+
+    updateAttendanceFields();
+
+    /* =========================================
+       LOCAL RSVP STORAGE
+       Responses are saved only in this browser.
+       They are not sent to the website owner.
+       ========================================= */
+
+    const rsvpForm = document.getElementById("rsvpForm");
+    const formMessage = document.getElementById("formMessage");
+
+    function getSavedResponses() {
+      try {
+        const stored = localStorage.getItem("alexBirthdayRSVPs");
+        const parsed = stored ? JSON.parse(stored) : [];
+        return Array.isArray(parsed) ? parsed : [];
+      } catch (error) {
+        return null;
+      }
+    }
+
+    function showFormMessage(message, type) {
+      formMessage.textContent = message;
+      formMessage.className = "form-message " + type;
+    }
+
+    rsvpForm.addEventListener("submit", function (event) {
+      event.preventDefault();
+
+      if (!rsvpForm.checkValidity()) {
+        rsvpForm.reportValidity();
+        return;
+      }
+
+      const guestName = document.getElementById("guestName").value.trim();
+      const attendance = document.querySelector(
+        'input[name="attendance"]:checked'
+      ).value;
+      const guestMessage = document.getElementById("guestMessage").value.trim();
+      const guestCount = attendance === "yes"
+        ? Number(guestCountSelect.value)
+        : 0;
+
+      if (!guestName) {
+        showFormMessage("Please enter your name before submitting.", "error");
+        document.getElementById("guestName").focus();
+        return;
+      }
+
+      const responses = getSavedResponses();
+
+      if (responses === null) {
+        showFormMessage(
+          "Your browser does not allow access to local storage. " +
+          "Please enable it to save your RSVP on this device.",
+          "error"
+        );
+        return;
+      }
+
+      const response = {
+        name: guestName,
+        attendance: attendance === "yes" ? "I will be there" : "I can't come",
+        guestCount: guestCount,
+        message: guestMessage,
+        submittedAt: new Date().toISOString()
+      };
+
+      try {
+        responses.push(response);
+        localStorage.setItem("alexBirthdayRSVPs", JSON.stringify(responses));
+      } catch (error) {
+        showFormMessage(
+          "We couldn't save your response in this browser. " +
+          "Please check your browser storage settings.",
+          "error"
+        );
+        return;
+      }
+
+      if (attendance === "yes") {
+        showFormMessage(
+          "🎉 Thank you, " + guestName +
+          "! Your RSVP has been saved on this device for " +
+          guestCount + (guestCount === 1 ? " person." : " people.") +
+          " We can't wait to celebrate with you!",
+          "success"
+        );
+      } else {
+        showFormMessage(
+          "💗 Thank you for letting us know, " + guestName +
+          "! Your response has been saved on this device. " +
+          "We'll miss you and appreciate your message!",
+          "success"
+        );
+      }
+
+      rsvpForm.reset();
+      updateAttendanceFields();
+    });
+
+    /* =========================================
+       DECORATIVE FLOATING HEARTS
+       Created with vanilla JavaScript only.
+       ========================================= */
+
+    const heartsContainer = document.getElementById("floatingHearts");
+    const heartSymbols = ["♡", "♥", "✦", "✧"];
+
+    for (let i = 0; i < 12; i++) {
+      const heart = document.createElement("span");
+      heart.className = "floating-heart";
+      heart.textContent = heartSymbols[i % heartSymbols.length];
+      heart.style.left = (5 + Math.random() * 90) + "%";
+      heart.style.animationDelay = (Math.random() * 8) + "s";
+      heart.style.animationDuration = (6 + Math.random() * 5) + "s";
+      heart.style.fontSize = (16 + Math.random() * 20) + "px";
+      heart.style.color = i % 2 === 0 ? "#d86cae" : "#9872cf";
+      heartsContainer.appendChild(heart);
+    }
+  </script>
+</body>
+</html>
+
