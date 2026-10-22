@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -214,6 +213,12 @@
       box-shadow: 0 10px 24px rgba(165, 83, 164, 0.3);
     }
 
+    .primary-button:disabled {
+      opacity: 0.65;
+      cursor: wait;
+      transform: none;
+    }
+
     .primary-button:focus-visible,
     button:focus-visible,
     a:focus-visible,
@@ -402,6 +407,15 @@
       resize: vertical;
     }
 
+    /* Spam trap: hidden from real guests, bots tend to fill it in. */
+    .hp-field {
+      position: absolute;
+      left: -9999px;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+    }
+
     .attendance-options {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -500,6 +514,13 @@
       color: #963c56;
       background: #fff0f2;
       border: 1px solid #f0c2cd;
+    }
+
+    .form-message.info {
+      display: block;
+      color: #5a4a8a;
+      background: #f3eeff;
+      border: 1px solid #d9cdf5;
     }
 
     .privacy-note {
@@ -733,7 +754,26 @@
           Kindly send your RSVP so we can prepare for a lovely celebration.
         </p>
 
-        <form id="rsvpForm">
+        <!--
+          STEP: replace PASTE_YOUR_WEB_APP_URL_HERE below with the
+          Web app URL from Apps Script (Deploy > Manage deployments).
+          It must start with https://script.google.com/macros/s/ and end in /exec
+        -->
+        <form
+          id="rsvpForm"
+          method="POST"
+          action="PASTE_YOUR_WEB_APP_URL_HERE"
+          target="rsvpFrame"
+        >
+          <input type="hidden" name="requestId" id="requestId">
+
+          <!-- Spam trap (leave empty) -->
+          <div class="hp-field" aria-hidden="true">
+            <label for="website">Leave this field empty</label>
+            <input type="text" id="website" name="website"
+                   tabindex="-1" autocomplete="off">
+          </div>
+
           <div class="form-group">
             <label for="guestName">
               Your Name <span class="required">*</span>
@@ -820,7 +860,7 @@
             ></textarea>
           </div>
 
-          <button type="submit" class="primary-button submit-button">
+          <button type="submit" class="primary-button submit-button" id="submitButton">
             💖 Send My RSVP
           </button>
 
@@ -831,6 +871,9 @@
             aria-live="polite"
           ></div>
         </form>
+
+        <!-- Hidden frame that receives the reply from Google Apps Script -->
+        <iframe name="rsvpFrame" id="rsvpFrame" title="RSVP response" hidden></iframe>
 
         <p class="privacy-note">
           Thank you for being part of Alex's special day! 🎂
@@ -927,371 +970,105 @@
     updateAttendanceFields();
 
     /* =========================================
-       LOCAL RSVP STORAGE
-       Responses are saved only in this browser.
-       They are not sent to the website owner.
+       RSVP SUBMISSION -> GOOGLE SHEET
+       The form posts to the Apps Script web app through the hidden
+       iframe. The script replies with a postMessage so we can show
+       a real success or error message.
        ========================================= */
 
-    /* const rsvpForm = document.getElementById("rsvpForm");
+    const rsvpForm = document.getElementById("rsvpForm");
     const formMessage = document.getElementById("formMessage");
+    const submitButton = document.getElementById("submitButton");
+    const requestIdInput = document.getElementById("requestId");
+    const submitLabel = submitButton.textContent;
 
-    
-    function getSavedResponses() {
-      try {
-        const stored = localStorage.getItem("alexBirthdayRSVPs");
-        const parsed = stored ? JSON.parse(stored) : [];
-        return Array.isArray(parsed) ? parsed : [];
-      } catch (error) {
-        return null;
-      }
-    }
+    let pendingRequestId = null;
+    let pendingTimer = null;
 
     function showFormMessage(message, type) {
       formMessage.textContent = message;
       formMessage.className = "form-message " + type;
     }
 
-    rsvpForm.addEventListener("submit", function (event) {
-      event.preventDefault();
+    function finishSubmit() {
+      clearTimeout(pendingTimer);
+      pendingRequestId = null;
+      submitButton.disabled = false;
+      submitButton.textContent = submitLabel;
+    }
 
-      if (!rsvpForm.checkValidity()) {
-        rsvpForm.reportValidity();
+    rsvpForm.addEventListener("submit", function (event) {
+      // Not connected yet: stop, don't reload the page.
+      if (rsvpForm.getAttribute("action").indexOf("PASTE_YOUR") !== -1) {
+        event.preventDefault();
+        showFormMessage(
+          "The RSVP form isn't connected to the spreadsheet yet.",
+          "error"
+        );
         return;
       }
 
       const guestName = document.getElementById("guestName").value.trim();
-      const attendance = document.querySelector(
-        'input[name="attendance"]:checked'
-      ).value;
-      const guestMessage = document.getElementById("guestMessage").value.trim();
-      const guestCount = attendance === "yes"
-        ? Number(guestCountSelect.value)
-        : 0;
 
       if (!guestName) {
+        event.preventDefault();
         showFormMessage("Please enter your name before submitting.", "error");
         document.getElementById("guestName").focus();
         return;
       }
 
-      const responses = getSavedResponses();
+      pendingRequestId =
+        Date.now() + "-" + Math.random().toString(36).slice(2, 10);
+      requestIdInput.value = pendingRequestId;
 
-      if (responses === null) {
+      submitButton.disabled = true;
+      submitButton.textContent = "Sending...";
+      showFormMessage("Sending your RSVP...", "info");
+
+      // If no reply arrives, let the guest try again.
+      pendingTimer = setTimeout(function () {
+        finishSubmit();
         showFormMessage(
-          "Your browser does not allow access to local storage. " +
-          "Please enable it to save your RSVP on this device.",
+          "We didn't get a reply. Please check your connection and try again.",
           "error"
         );
-        return;
-      }
+      }, 25000);
 
-      const response = {
-        name: guestName,
-        attendance: attendance === "yes" ? "I will be there" : "I can't come",
-        guestCount: guestCount,
-        message: guestMessage,
-        submittedAt: new Date().toISOString()
-      };
-
-      try {
-        responses.push(response);
-        localStorage.setItem("alexBirthdayRSVPs", JSON.stringify(responses));
-      } catch (error) {
-        showFormMessage(
-          "We couldn't save your response in this browser. " +
-          "Please check your browser storage settings.",
-          "error"
-        );
-        return;
-      }
-
-      if (attendance === "yes") {
-        showFormMessage(
-          "🎉 Thank you, " + guestName +
-          "! Your RSVP has been saved on this device for " +
-          guestCount + (guestCount === 1 ? " person." : " people.") +
-          " We can't wait to celebrate with you!",
-          "success"
-        );
-      } else {
-        showFormMessage(
-          "💗 Thank you for letting us know, " + guestName +
-          "! Your response has been saved on this device. " +
-          "We'll miss you and appreciate your message!",
-          "success"
-        );
-      }
-
-      rsvpForm.reset();
-      updateAttendanceFields();
+      // The form now submits natively into the hidden iframe.
     });
-*/
 
-/**
- * Alex's 7th Birthday RSVP Backend
- * Google Apps Script Web App
- *
- * Spreadsheet tabs:
- *   1. RSVP Responses
- *   2. Summary
- */
+    window.addEventListener("message", function (event) {
+      const fromGoogle =
+        event.origin === "https://script.google.com" ||
+        /^https:\/\/[a-z0-9-]+\.googleusercontent\.com$/.test(event.origin);
 
-const SPREADSHEET_ID = "1JJNvKOgwm1csiqd_DMeD3k7ECfDr78DyCxU3sVL9LKA";
-const RESPONSE_SHEET = "RSVP Responses";
-const SUMMARY_SHEET = "Summary";
+      if (!fromGoogle) return;
 
-const HEADERS = [
-  "Submitted At",
-  "Guest Name",
-  "Attendance",
-  "Party Size",
-  "Birthday Message",
-  "Submission ID"
-];
+      const data = event.data;
 
-/**
- * Health check when the web app URL is opened directly.
- */
-function doGet() {
-  return HtmlService.createHtmlOutput(
-    "<h2>Alex's Birthday RSVP Backend</h2>" +
-    "<p>The backend is deployed. Submit an RSVP through the invitation.</p>"
-  );
-}
-
-/**
- * Receive an RSVP submitted by the invitation's HTML form.
- */
-function doPost(e) {
-  const params = e && e.parameter ? e.parameter : {};
-  const requestId = String(params.requestId || "");
-
-  try {
-    if (!SPREADSHEET_ID ||
-        SPREADSHEET_ID === 1JJNvKOgwm1csiqd_DMeD3k7ECfDr78DyCxU3sVL9LKA) {
-      throw new Error("The spreadsheet ID has not been configured.");
-    }
-
-    // Honeypot: reject submissions that fill in this hidden field.
-    if (String(params.website || "").trim() !== "") {
-      throw new Error("Invalid submission.");
-    }
-
-    const name = String(params.guestName || "")
-      .trim()
-      .replace(/\s+/g, " ");
-
-    const attendanceValue = String(params.attendance || "");
-    const message = String(params.guestMessage || "").trim().slice(0, 1000);
-
-    if (!name || name.length > 100) {
-      throw new Error("Please enter a valid name.");
-    }
-
-    if (attendanceValue !== "yes" && attendanceValue !== "no") {
-      throw new Error("Please select an attendance option.");
-    }
-
-    let partySize = 0;
-    let attendance = "I can't come";
-
-    if (attendanceValue === "yes") {
-      partySize = Number(params.guestCount);
-
-      if (!Number.isInteger(partySize) ||
-          partySize < 1 ||
-          partySize > 10) {
-        throw new Error("Please select a valid guest count.");
+      if (
+        !data ||
+        data.type !== "ALEX_RSVP_RESULT" ||
+        !pendingRequestId ||
+        data.requestId !== pendingRequestId
+      ) {
+        return;
       }
 
-      attendance = "I will be there";
-    }
+      finishSubmit();
 
-    const lock = LockService.getScriptLock();
-    lock.waitLock(10000);
-
-    try {
-      const spreadsheet =
-        SpreadsheetApp.openById(SPREADSHEET_ID);
-
-      const sheet = getResponseSheet_(spreadsheet);
-      getSummarySheet_(spreadsheet);
-
-      const now = new Date();
-      const lastRow = sheet.getLastRow();
-
-      let existingRow = 0;
-
-      /*
-       * Resubmitting with the same full name updates that guest's
-       * existing response instead of adding another row.
-       *
-       * Ask guests to use distinct full names to avoid collisions.
-       */
-      if (lastRow >= 2) {
-        const names = sheet.getRange(2, 2, lastRow - 1, 1)
-          .getDisplayValues();
-
-        const normalizedName = name.toLocaleLowerCase();
-
-        for (let i = 0; i < names.length; i++) {
-          if (String(names[i][0]).trim().toLocaleLowerCase()
-              === normalizedName) {
-            existingRow = i + 2;
-            break;
-          }
-        }
-      }
-
-      const rowData = [
-        now,
-        name,
-        attendance,
-        partySize,
-        message,
-        requestId
-      ];
-
-      if (existingRow) {
-        sheet.getRange(existingRow, 1, 1, HEADERS.length)
-          .setValues([rowData]);
+      if (data.ok) {
+        showFormMessage("🎉 " + data.message, "success");
+        rsvpForm.reset();
+        updateAttendanceFields();
       } else {
-        sheet.appendRow(rowData);
+        showFormMessage(
+          data.message || "We couldn't save your RSVP. Please try again.",
+          "error"
+        );
       }
+    });
 
-      sheet.getRange(
-        existingRow || sheet.getLastRow(),
-        1
-      ).setNumberFormat("mmm d, yyyy h:mm AM/PM");
-
-    } finally {
-      lock.releaseLock();
-    }
-
-    return responsePage_(
-      requestId,
-      true,
-      attendanceValue === "yes"
-        ? "Thank you, " + name +
-          "! Your RSVP has been saved. We look forward to seeing you!"
-        : "Thank you, " + name +
-          "! Your response has been saved. We'll miss you!"
-    );
-
-  } catch (error) {
-    console.error(error);
-
-    return responsePage_(
-      requestId,
-      false,
-      error && error.message
-        ? error.message
-        : "We couldn't save your RSVP. Please try again."
-    );
-  }
-}
-
-/**
- * Get the response sheet and create its headers if necessary.
- */
-function getResponseSheet_(spreadsheet) {
-  let sheet = spreadsheet.getSheetByName(RESPONSE_SHEET);
-
-  if (!sheet) {
-    sheet = spreadsheet.insertSheet(RESPONSE_SHEET);
-  }
-
-  if (sheet.getLastRow() === 0) {
-    sheet.getRange(1, 1, 1, HEADERS.length)
-      .setValues([HEADERS]);
-
-    sheet.setFrozenRows(1);
-    sheet.getRange(1, 1, 1, HEADERS.length)
-      .setFontWeight("bold")
-      .setBackground("#F6A6CF");
-    sheet.autoResizeColumns(1, HEADERS.length);
-  }
-
-  return sheet;
-}
-
-/**
- * Create a summary dashboard with live spreadsheet formulas.
- */
-function getSummarySheet_(spreadsheet) {
-  let sheet = spreadsheet.getSheetByName(SUMMARY_SHEET);
-
-  if (!sheet) {
-    sheet = spreadsheet.insertSheet(SUMMARY_SHEET);
-  }
-
-  if (sheet.getLastRow() === 0) {
-    sheet.getRange("A1:B1").merge();
-    sheet.getRange("A1").setValue("Alex's 7th Birthday RSVP Summary");
-
-    sheet.getRange("A3:B7").setValues([
-      ["Metric", "Total"],
-      ["Accepted RSVPs", ""],
-      ["Declined RSVPs", ""],
-      ["Expected Attendees", ""],
-      ["Total Responses", ""]
-    ]);
-
-    sheet.getRange("B4").setFormula(
-      '=COUNTIF(\'RSVP Responses\'!C2:C,"I will be there")'
-    );
-
-    sheet.getRange("B5").setFormula(
-      '=COUNTIF(\'RSVP Responses\'!C2:C,"I can\'t come")'
-    );
-
-    sheet.getRange("B6").setFormula(
-      '=SUMIF(\'RSVP Responses\'!C2:C,"I will be there",\'RSVP Responses\'!D2:D)'
-    );
-
-    sheet.getRange("B7").setFormula(
-      '=COUNTA(\'RSVP Responses\'!B2:B)'
-    );
-
-    sheet.getRange("A1:B1")
-      .setFontWeight("bold")
-      .setFontSize(16)
-      .setBackground("#E9D5FF");
-
-    sheet.getRange("A3:B3")
-      .setFontWeight("bold")
-      .setBackground("#FCE7F3");
-
-    sheet.setColumnWidth(1, 220);
-    sheet.setColumnWidth(2, 140);
-  }
-
-  return sheet;
-}
-
-/**
- * Return an HTML response to the hidden iframe in index.html.
- * postMessage lets the parent page know whether saving succeeded.
- */
-function responsePage_(requestId, ok, message) {
-  const payload = JSON.stringify({
-    type: "ALEX_RSVP_RESULT",
-    requestId: String(requestId || ""),
-    ok: Boolean(ok),
-    message: String(message || "")
-  }).replace(/</g, "\\u003c");
-
-  const html =
-    '<!DOCTYPE html><html><head><meta charset="UTF-8"></head>' +
-    '<body><script>' +
-    'window.parent.postMessage(' + payload + ', "*");' +
-    '</script></body></html>';
-
-  return HtmlService.createHtmlOutput(html)
-    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
-}
-
-    
     /* =========================================
        DECORATIVE FLOATING HEARTS
        Created with vanilla JavaScript only.
@@ -1314,4 +1091,3 @@ function responsePage_(requestId, ok, message) {
   </script>
 </body>
 </html>
-
