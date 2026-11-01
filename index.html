@@ -1104,6 +1104,14 @@
 
       if (!fromGoogle) return;
 
+          window.addEventListener("message", function (event) {
+      alert("Message received from: " + event.origin);   // TEMPORARY TEST
+
+      const fromGoogle =
+        event.origin === "https://script.google.com" ||
+        /^https:\/\/[a-z0-9-]+\.googleusercontent\.com$/.test(event.origin);
+
+      if (!fromGoogle) return;
       const data = event.data;
 
       if (
