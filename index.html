@@ -303,12 +303,19 @@
       letter-spacing: 1px;
     }
 
+/* =========================================
+   PARTY DETAILS SECTION
+   ========================================= */
+
+/* 1. BACKGROUND (desktop and tablet)
+   Pink-white overlay on top, carnival photo underneath. */
 .details-section {
   background:
     linear-gradient(rgba(255, 245, 252, 0.72), rgba(255, 245, 252, 0.72)),
-    url("Jollibee Carnival.jpg") center / cover no-repeat;
-    }
+    url("jollibee-carnival.jpg") center / cover no-repeat;
+}
 
+/* 2. WHITE PANEL behind the title and subtitle */
 .details-section .section-heading {
   max-width: 560px;
   margin: 0 auto 35px;
@@ -325,49 +332,90 @@
   color: #6a5370;
   font-weight: bold;
 }
-    .details-grid {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 20px;
-    }
 
-    .detail-card {
-      padding: 30px 18px;
-      text-align: center;
-      background: rgba(255, 255, 255, 0.9);
-      border: 1px solid #f4d7ed;
-      border-radius: 25px;
-      box-shadow: var(--shadow);
-      transition: transform 0.2s;
-    }
+/* 3. THE THREE CARDS (unchanged from your original) */
+.details-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+}
 
-    .detail-card:hover {
-      transform: translateY(-5px);
-    }
+.detail-card {
+  padding: 30px 18px;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid #f4d7ed;
+  border-radius: 25px;
+  box-shadow: var(--shadow);
+  transition: transform 0.2s;
+}
 
-    .detail-icon {
-      display: block;
-      font-size: 2.7rem;
-      margin-bottom: 10px;
-    }
+.detail-card:hover {
+  transform: translateY(-5px);
+}
 
-    .detail-card h3 {
-      font-size: 1.15rem;
-      color: var(--purple-dark);
-      margin-bottom: 7px;
-    }
+.detail-icon {
+  display: block;
+  font-size: 2.7rem;
+  margin-bottom: 10px;
+}
 
-    .detail-card p {
-      color: #79627f;
-    }
+.detail-card h3 {
+  font-size: 1.15rem;
+  color: var(--purple-dark);
+  margin-bottom: 7px;
+}
 
-    .venue-note {
-      text-align: center;
-      margin-top: 25px;
-      color: #79627f;
-      font-size: 0.95rem;
-    }
+.detail-card p {
+  color: #79627f;
+}
 
+/* 4. BOTTOM MESSAGE */
+.venue-note {
+  text-align: center;
+  margin-top: 25px;
+  color: #79627f;
+  font-size: 0.95rem;
+}
+
+/* White pill behind it. Must stay AFTER the original .venue-note. */
+.details-section .venue-note {
+  display: table;
+  margin: 25px auto 0;
+  padding: 10px 22px;
+  background: rgba(255, 255, 255, 0.88);
+  border-radius: 30px;
+  color: #6a5370;
+  font-weight: bold;
+}
+
+/* 5. MOBILE OVERRIDE (phones, 700px wide or less)
+   Must stay AFTER everything above so it can override it. */
+@media (max-width: 700px) {
+  .details-section {
+    position: relative;
+    padding-top: calc(55vw + 10px);
+    background: linear-gradient(180deg, #ffe8f4, #f9e8fa);
+  }
+
+  .details-section::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 56vw;
+    background: url("jollibee-carnival.jpg") center top / 100% auto no-repeat;
+    -webkit-mask-image: linear-gradient(to bottom, #000 65%, transparent 100%);
+    mask-image: linear-gradient(to bottom, #000 65%, transparent 100%);
+    pointer-events: none;
+  }
+
+  .details-section .section-inner {
+    position: relative;
+    z-index: 1;
+  }
+}
     .rsvp-section {
       background: linear-gradient(180deg, #fffaf5, #f9e8fa);
     }
