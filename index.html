@@ -831,7 +831,7 @@
           id="rsvpForm"
           method="POST"
           action="https://script.google.com/macros/s/AKfycbya1HPeQhhTrd2Gt6zaA_KhULICAxmB2CbAM8euyboJlHlVvGMR1FlnD4wxfZtw0G7thw/exec"
-          target="rsvpFrame"
+          
         >
           <input type="hidden" name="requestId" id="requestId">
 
@@ -932,9 +932,6 @@
           ></div>
         </form>
 
-        <!-- Hidden frame that receives the reply from Google Apps Script -->
-        <iframe name="rsvpFrame" id="rsvpFrame" title="RSVP response" hidden></iframe>
-
         <p class="privacy-note">
           Thank you for being part of Alex's special day! 🎂
         </p>
@@ -1029,102 +1026,51 @@
 
     updateAttendanceFields();
 
-    /* =========================================
-       RSVP SUBMISSION -> GOOGLE SHEET
-       The form posts to the Apps Script web app through the hidden
-       iframe. The script replies with a postMessage so we can show
-       a real success or error message.
-       ========================================= */
+   /* =========================================
+   RSVP SUBMISSION -> GOOGLE SHEET (fetch)
+   ========================================= */
 
-    const rsvpForm = document.getElementById("rsvpForm");
-    const formMessage = document.getElementById("formMessage");
-    const submitButton = document.getElementById("submitButton");
-    const requestIdInput = document.getElementById("requestId");
-    const submitLabel = submitButton.textContent;
+const rsvpForm = document.getElementById("rsvpForm");
+const formMessage = document.getElementById("formMessage");
+const submitButton = document.getElementById("submitButton");
+const requestIdInput = document.getElementById("requestId");
+const submitLabel = submitButton.textContent;
 
-    let pendingRequestId = null;
-    let pendingTimer = null;
+function showFormMessage(message, type) {
+  formMessage.textContent = message;
+  formMessage.className = "form-message " + type;
+}
 
-    function showFormMessage(message, type) {
-      formMessage.textContent = message;
-      formMessage.className = "form-message " + type;
-    }
+rsvpForm.addEventListener("submit", function (event) {
+  event.preventDefault();
 
-    function finishSubmit() {
-      clearTimeout(pendingTimer);
-      pendingRequestId = null;
-      submitButton.disabled = false;
-      submitButton.textContent = submitLabel;
-    }
+  const guestName = document.getElementById("guestName").value.trim();
+  if (!guestName) {
+    showFormMessage("Please enter your name before submitting.", "error");
+    document.getElementById("guestName").focus();
+    return;
+  }
 
-    rsvpForm.addEventListener("submit", function (event) {
-      // Not connected yet: stop, don't reload the page.
-      if (rsvpForm.getAttribute("action").indexOf("PASTE_YOUR") !== -1) {
-        event.preventDefault();
-        showFormMessage(
-          "The RSVP form isn't connected to the spreadsheet yet.",
-          "error"
-        );
-        return;
+  const requestId = Date.now() + "-" + Math.random().toString(36).slice(2, 10);
+  requestIdInput.value = requestId;
+
+  submitButton.disabled = true;
+  submitButton.textContent = "Sending...";
+  showFormMessage("Sending your RSVP...", "info");
+
+  const controller = new AbortController();
+  const timer = setTimeout(function () { controller.abort(); }, 25000);
+
+  fetch(rsvpForm.action, {
+    method: "POST",
+    body: new URLSearchParams(new FormData(rsvpForm)),
+    signal: controller.signal
+  })
+    .then(function (response) { return response.json(); })
+    .then(function (data) {
+      if (data.requestId !== requestId) {
+        throw new Error("Mismatched reply");
       }
-
-      const guestName = document.getElementById("guestName").value.trim();
-
-      if (!guestName) {
-        event.preventDefault();
-        showFormMessage("Please enter your name before submitting.", "error");
-        document.getElementById("guestName").focus();
-        return;
-      }
-
-      pendingRequestId =
-        Date.now() + "-" + Math.random().toString(36).slice(2, 10);
-      requestIdInput.value = pendingRequestId;
-
-      submitButton.disabled = true;
-      submitButton.textContent = "Sending...";
-      showFormMessage("Sending your RSVP...", "info");
-
-      // If no reply arrives, let the guest try again.
-      pendingTimer = setTimeout(function () {
-        finishSubmit();
-        showFormMessage(
-          "We didn't get a reply. Please check your connection and try again.",
-          "error"
-        );
-      }, 25000);
-
-      // The form now submits natively into the hidden iframe.
-    });
-
-    window.addEventListener("message", function (event) {
-      const fromGoogle =
-        event.origin === "https://script.google.com" ||
-        /^https:\/\/[a-z0-9-]+\.googleusercontent\.com$/.test(event.origin);
-
-      if (!fromGoogle) return;
-
-          window.addEventListener("message", function (event) {
-      alert("Message received from: " + event.origin);   // TEMPORARY TEST
-
-      const fromGoogle =
-        event.origin === "https://script.google.com" ||
-        /^https:\/\/[a-z0-9-]+\.googleusercontent\.com$/.test(event.origin);
-
-      if (!fromGoogle) return;
-      const data = event.data;
-
-      if (
-        !data ||
-        data.type !== "ALEX_RSVP_RESULT" ||
-        !pendingRequestId ||
-        data.requestId !== pendingRequestId
-      ) {
-        return;
-      }
-
-      finishSubmit();
-
       if (data.ok) {
         showFormMessage("🎉 " + data.message, "success");
         rsvpForm.reset();
@@ -1135,7 +1081,19 @@
           "error"
         );
       }
+    })
+    .catch(function () {
+      showFormMessage(
+        "We didn't get a reply. Please check your connection and try again.",
+        "error"
+      );
+    })
+    .finally(function () {
+      clearTimeout(timer);
+      submitButton.disabled = false;
+      submitButton.textContent = submitLabel;
     });
+});
 
     /* =========================================
        DECORATIVE FLOATING HEARTS
